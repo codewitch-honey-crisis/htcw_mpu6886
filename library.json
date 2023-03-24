@@ -1,0 +1,18 @@
+{
+    "name": "htcw_mpu6886",
+    "version": "0.1.1",
+    "description": "Provides support for the MPU6886 accelerometer/gyroscope",
+    "keywords": ["accelerometer","gyroscope","mpu6886"],
+    "authors": {
+        "name":"honey the codewitch",
+        "homepage": "https://www.codeproject.com/Members/code-witch"
+    },
+    "license": "MIT",
+    "frameworks": ["arduino","espidf"],
+    "platforms": "*",
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/codewitch-honey-crisis/htcw_mpu6886.git"
+    }
+}

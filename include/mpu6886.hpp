@@ -1,116 +1,126 @@
-#pragma once
+/*
+ Note: The MPU6886 is an I2C sensor and uses the Arduino Wire library.
+ Because the sensor is not 5V tolerant, we are using a 3.3 V 8 MHz Pro Mini or
+ a 3.3 V Teensy 3.1. We have disabled the internal pull-ups used by the Wire
+ library in the Wire.h/twi.c utility file. We are also using the 400 kHz fast
+ I2C mode by setting the TWI_FREQ  to 400000L /twi.h utility file.
+ */
+#ifndef _MPU6886_H_
+#define _MPU6886_H_
 #if __has_include(<Arduino.h>)
 #include <Arduino.h>
 #include <Wire.h>
-namespace arduino {
 #else
-#ifdef ESP_PLATFORM
+#include <esp_timer.h>
 #include <inttypes.h>
+#include <stdio.h>
+#include <string.h>
+#include <esp_idf_version.h>
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+#include <driver/i2c_master.h>
+#else
 #include <driver/i2c.h>
-namespace esp_idf {
-#else
-#error "This library requires Arduino or an ESP32"
 #endif
 #endif
 
 
-enum struct mpu6886_acc_scale {
-    scale_2g = 0,
-    scale_4g,
-    scale_8g,
-    scale_16g
-};
-
-enum struct mpu6886_gyro_scale {
-    scale_250dps=0,
-    scale_500dps,
-    scale_1000dps,
-    scale_2000dps
-};
-
+//#define G (9.8)
+#define RtA     57.324841
+#define AtR     0.0174533
+#define Gyro_Gr 0.0010653
+    enum struct mpu6886_scale {
+        g2=0,
+        g4,
+        g8,
+        g16
+    };
+    enum struct mpu6886_dps {
+        
+        dps250=0,
+        dps500,
+        dps1000,
+        dps2000
+    };
 class mpu6886 {
-    constexpr static const int8_t address = 0x68;
-    constexpr static const uint8_t op_whoami = 0x75;
-    constexpr static const uint8_t op_accel_intel_ctrl = 0x69;
-    constexpr static const uint8_t op_smplrt_div = 0x19;
-    constexpr static const uint8_t op_int_pin_cfg = 0x37;
-    constexpr static const uint8_t op_int_enable = 0x38;
-    constexpr static const uint8_t op_accel_xout_h = 0x3B;
-    constexpr static const uint8_t op_accel_xout_l = 0x3C;
-    constexpr static const uint8_t op_accel_yout_h = 0x3D;
-    constexpr static const uint8_t op_accel_yout_l = 0x3E;
-    constexpr static const uint8_t op_accel_zout_h = 0x3F;
-    constexpr static const uint8_t op_accel_zout_l = 0x40;
-
-    constexpr static const uint8_t op_temp_out_h = 0x41;
-    constexpr static const uint8_t op_temp_out_l = 0x42;
-
-    constexpr static const uint8_t op_gyro_xout_h = 0x43;
-    constexpr static const uint8_t op_gyro_xout_l = 0x44;
-    constexpr static const uint8_t op_gyro_yout_h = 0x45;
-    constexpr static const uint8_t op_gyro_yout_l = 0x46;
-    constexpr static const uint8_t op_gyro_zout_h = 0x47;
-    constexpr static const uint8_t op_gyro_zout_l = 0x48;
-
-    constexpr static const uint8_t op_user_ctrl = 0x6A;
-    constexpr static const uint8_t op_pwr_mgmt_1 = 0x6B;
-    constexpr static const uint8_t op_pwr_mgmt_2 = 0x6C;
-    constexpr static const uint8_t op_config = 0x1A;
-    constexpr static const uint8_t op_gyro_config = 0x1B;
-    constexpr static const uint8_t op_accel_config = 0x1C;
-    constexpr static const uint8_t op_accel_config2 = 0x1D;
-    constexpr static const uint8_t op_fifo_en = 0x23;
-
-    constexpr static const uint8_t op_fifo_enable = 0x23;
-    constexpr static const uint8_t op_fifo_count = 0x72;
-    constexpr static const uint8_t op_fifo_r_w = 0x74;
-    constexpr static const uint8_t op_gyro_offset = 0x13;
-
-    constexpr static const double rta = 57.324841;
-    constexpr static const double atr = 0.0174533;
-    constexpr static const double gyro_gr =	0.0010653;
-#ifdef ARDUINO
-    TwoWire& m_i2c;
-#else
-    i2c_port_t m_i2c;
-#endif
-    bool m_initialized;
-    mpu6886_acc_scale m_acc_scale;
-    mpu6886_gyro_scale m_gyro_scale;
-    float m_ares;
-    float m_gres;
-    float m_imuId;
-    void adc_reset();
-    void update_gres();
-    void update_ares();
-    void acc_adc(int16_t* out_x,int16_t* out_y,int16_t* out_z);
-    void gyro_adc(int16_t* out_x,int16_t*out_y,int16_t* out_z);
-    int16_t temp_adc();
-    mpu6886(const mpu6886& rhs)=delete;
-    mpu6886& operator=(const mpu6886& rhs)=delete;
-    void do_move(mpu6886& rhs);
+   
    public:
-    
-    inline mpu6886(
-#ifdef ARDUINO
+    mpu6886(
+ #ifdef ARDUINO
         TwoWire& i2c = Wire
+#else
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+        i2c_master_bus_handle_t i2c
 #else
         i2c_port_t i2c = I2C_NUM_0
 #endif
-        ) : m_i2c(i2c), m_initialized(false) {
-    }
-    mpu6886(mpu6886&& rhs);
-    mpu6886& operator=(mpu6886&& rhs);
-    inline bool initialized() const { return m_initialized; }
+#endif       
+    );
     bool initialize();
-    inline mpu6886_acc_scale acc_scale() const { return m_acc_scale; }
-    void acc_scale(mpu6886_acc_scale value);
-    inline mpu6886_gyro_scale gyro_scale() const { return m_gyro_scale; }
-    void gyro_offset(float x, float y, float z);
-    void gyro_scale(mpu6886_gyro_scale value);
-    void acc(float* out_x, float* out_y, float* out_z);
-    void gyro(float* out_x, float* out_y, float* out_z);
-    void ahrs(float* out_pitch, float* out_yaw, float* out_roll);
-    float temp();
+    bool initialized() const;
+    void acc_raw_xyz(int16_t* ax, int16_t* ay, int16_t* az);
+    void gyro_raw_xyz(int16_t* gx, int16_t* gy, int16_t* gz);
+    void temp_raw(int16_t* t);
+
+    void acc_xyz(float* ax, float* ay, float* az);
+    void gyro_xyz(float* gx, float* gy, float* gz);
+    void temp(float* t);
+
+    mpu6886_dps gyro_dps() const;
+    void gyro_dps(mpu6886_dps value);
+    mpu6886_scale acc_scale() const;
+    void acc_scale(mpu6886_scale value);
+
+    void ahrs(float* pitch, float* roll, float* yaw);
+    void attitude(double* pitch, double* roll);
+
+   public:
+    
+   private:
+#ifdef ARDUINO
+    TwoWire& m_i2c;
+#else
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+    i2c_master_bus_handle_t m_i2c_bus;
+    i2c_master_dev_handle_t m_i2c;
+#else
+    constexpr static const uint8_t ACK_CHECK_EN = 0x1;
+    constexpr static const uint8_t ACK_CHECK_DIS = 0x0;
+    constexpr static const uint8_t ACK_VAL = 0x0;
+    constexpr static const uint8_t NACK_VAL = 0x1;
+    i2c_port_t m_i2c;
+#endif
+#endif
+    bool m_initialized;
+    mpu6886_dps Gyscale = mpu6886_dps::dps2000;
+    mpu6886_scale Acscale = mpu6886_scale::g8;
+    float aRes, gRes;
+    float _last_theta = 0;
+    float _last_phi   = 0;
+    float _alpha      = 0.5;
+    volatile float twoKp;  
+    volatile float twoKi;
+    volatile float
+        q0 = 1.0,
+        q1 = 0.0, q2 = 0.0,
+        q3 = 0.0;  // quaternion of sensor frame relative to auxiliary frame
+    volatile float integralFBx = 0.0f, integralFBy = 0.0f,
+                integralFBz = 0.0f;  // integral error terms scaled by Ki
+   private:
+    void read_reg(uint8_t start_Addr,
+                         uint8_t number_Bytes, uint8_t* read_Buffer);
+    void write_reg(uint8_t start_Addr,
+                          uint8_t number_Bytes, const uint8_t* write_Buffer);
+    void update_gres();
+    void update_ares();
+
+    
+    void mahony_ahrs_update(float gx, float gy, float gz, float ax, float ay,
+                          float az, float mx, float my, float mz);
+    void mahony_ahrs_update_imu(float gx, float gy, float gz, float ax, float ay,
+                             float az, float *pitch, float *roll, float *yaw);
+    static float inv_sqrt(float x);
+#ifndef ARDUINO
+    static void delay(uint32_t ms);
+#endif
 };
-}  // namespace arduino
+#endif

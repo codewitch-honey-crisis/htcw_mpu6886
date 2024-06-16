@@ -602,5 +602,5 @@ float mpu6886::inv_sqrt(float x) {
     return y;
 }
 #ifndef ARDUINO
-static void mpu6886::delay(uint32_t ms) { vTaskDelay(pdMS_TO_TICKS(ms)); }
+void mpu6886::delay(uint32_t ms) { vTaskDelay(pdMS_TO_TICKS(ms)); }
 #endif

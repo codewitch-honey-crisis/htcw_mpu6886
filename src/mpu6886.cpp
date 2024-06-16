@@ -593,10 +593,12 @@ void mpu6886::mahony_ahrs_update_imu(float gx, float gy, float gz, float ax, flo
 float mpu6886::inv_sqrt(float x) {
     float halfx = 0.5f * x;
     float y     = x;
+#pragma GCC diagnostic ignored "-Wuninitialized"
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
     long i = *(long *)&y;
     i      = 0x5f3759df - (i >> 1);
     y      = *(float *)&i;
+#pragma GCC diagnostic warning "-Wuninitialized"
 #pragma GCC diagnostic warning "-Wstrict-aliasing"
     y = y * (1.5f - (halfx * y * y));
     return y;

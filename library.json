@@ -1,6 +1,6 @@
 {
     "name": "htcw_mpu6886",
-    "version": "0.1.7",
+    "version": "0.1.8",
     "description": "Provides support for the MPU6886 accelerometer/gyroscope",
     "keywords": ["accelerometer","gyroscope","mpu6886"],
     "authors": {

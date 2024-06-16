@@ -14,5 +14,23 @@
     {
         "type": "git",
         "url": "https://github.com/codewitch-honey-crisis/htcw_mpu6886.git"
-    }
+    },
+    "examples": [
+        {
+            "name": "Demo",
+            "base": "examples/demo",
+            "files": [
+                "platformio.ini",
+                "LICENSE",
+                "src/main.cpp",
+                "src/panel.cpp",
+                "include/assets/telegrama.hpp",
+                "include/panel.hpp",
+                "include/cube3d.hpp",
+                "include/ui.hpp"
+                
+            ]
+        }
+    ]
+
 }

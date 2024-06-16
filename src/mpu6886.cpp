@@ -570,7 +570,9 @@ void mpu6886::mahony_ahrs_update_imu(float gx, float gy, float gz, float ax, flo
 
 float mpu6886::inv_sqrt(float x) {
     float halfx = 0.5f * x;
-    float y     = x;
+    float y  =0;
+    y  = x;
+#pragma GCC diagnostic ignored "-Wuninitialized"
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
     long i = *(long *)&y;
     i      = 0x5f3759df - (i >> 1);
@@ -580,5 +582,7 @@ float mpu6886::inv_sqrt(float x) {
     return y;
 }
 #ifndef ARDUINO
-void mpu6886::delay(uint32_t ms) { vTaskDelay(pdMS_TO_TICKS(ms)); }
+void mpu6886::delay(uint32_t ms) { 
+    vTaskDelay(pdMS_TO_TICKS(ms)); 
+}
 #endif

@@ -60,6 +60,7 @@ class mpu6886 {
     void acc_raw_xyz(int16_t* ax, int16_t* ay, int16_t* az);
     void gyro_raw_xyz(int16_t* gx, int16_t* gy, int16_t* gz);
     void temp_raw(int16_t* t);
+    void calibrate(int count = 256, uint32_t delay_ms=0);
 
     void acc_xyz(float* ax, float* ay, float* az);
     void gyro_xyz(float* gx, float* gy, float* gz);
@@ -94,6 +95,7 @@ class mpu6886 {
     mpu6886_dps Gyscale = mpu6886_dps::dps2000;
     mpu6886_scale Acscale = mpu6886_scale::g8;
     float aRes, gRes;
+    float m_gox,m_goy,m_goz;
     float _last_theta = 0;
     float _last_phi   = 0;
     float _alpha      = 0.5;
@@ -113,7 +115,6 @@ class mpu6886 {
     void update_gres();
     void update_ares();
 
-    
     void mahony_ahrs_update(float gx, float gy, float gz, float ax, float ay,
                           float az, float mx, float my, float mz);
     void mahony_ahrs_update_imu(float gx, float gy, float gz, float ax, float ay,

@@ -128,7 +128,7 @@ bool mpu6886::initialize() {
     if(!m_initialized) {
         unsigned char tempdata[1];
         unsigned char regdata;
-
+        m_gox = 0;m_goy = 0;m_goz = 0;
 #ifdef ARDUINO
         m_i2c.begin();
 #else
@@ -357,9 +357,9 @@ void mpu6886::gyro_xyz(float* gx, float* gy, float* gz) {
     int16_t gyroZ = 0;
     gyro_raw_xyz(&gyroX, &gyroY, &gyroZ);
 
-    *gx = (float)gyroX * gRes;
-    *gy = (float)gyroY * gRes;
-    *gz = (float)gyroZ * gRes;
+    *gx = ((float)gyroX * gRes)-m_gox;
+    *gy = ((float)gyroY * gRes)-m_goy;
+    *gz = ((float)gyroZ * gRes)-m_goz;
 }
 
 void mpu6886::temp(float* t) {
@@ -367,6 +367,28 @@ void mpu6886::temp(float* t) {
     temp_raw(&temp);
 
     *t = (float)temp / 326.8 + 25.0;
+}
+
+void mpu6886::calibrate(int count, uint32_t delay_ms) {
+
+    float ox=0, oy=0, oz = 0;
+    m_gox = 0;
+    m_goy = 0;
+    m_goz = 0;
+    float n = count;
+    while(count--) {
+        if(delay_ms) {
+            delay(delay_ms);
+        }
+        float gx, gy, gz;
+        gyro_xyz(&gx,&gy,&gz);
+        ox += gx;
+        oy += gy;
+        oz += gz;
+    }
+    m_gox = ox/n;
+    m_goy = oy/n;
+    m_goz = oz/n;
 }
 
 void mpu6886::mahony_ahrs_update(float gx, float gy, float gz, float ax, float ay,
@@ -570,9 +592,7 @@ void mpu6886::mahony_ahrs_update_imu(float gx, float gy, float gz, float ax, flo
 
 float mpu6886::inv_sqrt(float x) {
     float halfx = 0.5f * x;
-    float y  =0;
-    y  = x;
-#pragma GCC diagnostic ignored "-Wuninitialized"
+    float y     = x;
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
     long i = *(long *)&y;
     i      = 0x5f3759df - (i >> 1);
@@ -582,7 +602,5 @@ float mpu6886::inv_sqrt(float x) {
     return y;
 }
 #ifndef ARDUINO
-void mpu6886::delay(uint32_t ms) { 
-    vTaskDelay(pdMS_TO_TICKS(ms)); 
-}
+static void mpu6886::delay(uint32_t ms) { vTaskDelay(pdMS_TO_TICKS(ms)); }
 #endif
